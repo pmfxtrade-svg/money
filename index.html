@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
+        // Fix for "ReferenceError: process is not defined" in some libraries
+        window.process = { env: { NODE_ENV: 'production' } };
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -62,5 +65,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 overflow-x-hidden">
     <div id="root"></div>
+    <!-- Main Entry Point -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>

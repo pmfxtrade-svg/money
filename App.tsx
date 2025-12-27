@@ -446,10 +446,9 @@ const App: React.FC = () => {
                 onAction={(action) => {
                     if (action === 'reset') {
                          if (confirm('آیا مطمئن هستید؟ همه اطلاعات پاک خواهد شد.')) {
-                            // Reset state but keep initialized true to avoid onboarding loop if wanted, 
-                            // or full reset:
-                             const emptyState = { ...initialAppState, isInitialized: true, currentPage: 'dashboard' as any };
-                             setState(emptyState);
+                            // Reset state to initialAppState (which has isInitialized: false)
+                            // This ensures the welcome/onboarding screen is shown
+                             setState(initialAppState);
                         }
                     } else {
                         setActiveModal(action);
