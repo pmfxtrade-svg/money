@@ -6,8 +6,9 @@ import { DashboardPage } from './components/Dashboard';
 import { SettingsPage } from './components/Settings';
 import { ProfitLossPage } from './components/ProfitLoss';
 import { TradesPage } from './components/Trades';
-import { AddCapitalModal, AdjustValueModal, ManageAssetModal, SubItemManagerModal } from './components/Modals';
-import { AppState, Assets, TradeRecord } from './types';
+import { ProjectionPage } from './components/Projection';
+import { AddCapitalModal, AdjustValueModal, ManageAssetModal, SubItemManagerModal, SqlCodeModal } from './components/Modals';
+import { AppState, Assets, TradeRecord, ProjectionSettings } from './types';
 import { getTodayDate, formatCurrency } from './utils';
 import { LogOut } from 'lucide-react';
 
@@ -44,8 +45,8 @@ const initialAppState: AppState = {
         },
         foreignStock: {
             name: 'سهام شرکت خارجی',
-            percentage: 20,
-            value: 0,
+            percentage: 20, 
+            value: 0, 
             initialValue: 0,
             profitLoss: 0,
             subItems: [
@@ -79,6 +80,19 @@ const initialAppState: AppState = {
     },
     transactions: [],
     tradeHistory: [],
+    projectionSettings: {
+        baseCapital: 0,
+        years: 5,
+        monthlyContribution: 0,
+        annualIncrease: 20,
+        expectedReturns: {
+            gold: 35,
+            stock: 30,
+            foreignStock: 25,
+            crypto: 50,
+            cash: 15
+        }
+    }
 };
 
 const App: React.FC = () => {
@@ -133,6 +147,9 @@ const App: React.FC = () => {
                         }
                         if (!parsed.tradeHistory) {
                             parsed.tradeHistory = [];
+                        }
+                        if (!parsed.projectionSettings) {
+                            parsed.projectionSettings = initialAppState.projectionSettings;
                         }
                         setState(parsed);
                     }
@@ -357,8 +374,8 @@ const App: React.FC = () => {
         }));
     };
 
-    const handleAddSubItem = (key: string) => {
-        const name = prompt("نام زیرمجموعه جدید:");
+    const handleAddSubItem = (key: string, name: string) => {
+        // Replaced prompt with direct argument passed from SettingsPage
         if(!name) return;
         const newAssets = JSON.parse(JSON.stringify(state.assets));
         newAssets[key].subItems.push({ name, value: 0, quantity: 0, averageBuyPrice: 0, currentPrice: 0 });
@@ -371,6 +388,13 @@ const App: React.FC = () => {
         newAssets[key].subItems.splice(idx, 1);
         if(newAssets[key].subItems.length > 0) distributeToSubItems(newAssets[key]);
         setState(prev => ({ ...prev, assets: newAssets }));
+    };
+
+    const handleSaveProjection = (settings: ProjectionSettings) => {
+        setState(prev => ({
+            ...prev,
+            projectionSettings: settings
+        }));
     };
 
     // Manual Save/Load for backup (optional now, but kept for utility)
@@ -485,6 +509,12 @@ const App: React.FC = () => {
                 />
             ) : state.currentPage === 'profit-loss' ? (
                 <ProfitLossPage state={state} onRecordPnL={handleRecordPnL} onNavigate={(p) => setState(prev => ({ ...prev, currentPage: p }))} />
+            ) : state.currentPage === 'projection' ? (
+                <ProjectionPage 
+                    state={state}
+                    onNavigate={(p) => setState(prev => ({ ...prev, currentPage: p }))}
+                    onSave={handleSaveProjection}
+                />
             ) : (
                 <SettingsPage 
                     state={state}
@@ -526,6 +556,10 @@ const App: React.FC = () => {
                     onRecordTrade={handleRecordTrade}
                 />
             )}
+            <SqlCodeModal 
+                isOpen={activeModal === 'show-sql'}
+                onClose={() => setActiveModal(null)}
+            />
         </div>
     );
 };

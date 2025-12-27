@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { LayoutDashboard, Wallet, TrendingUp, Settings, Save, Upload, Trash2, PlusCircle, Calculator, Menu, History } from 'lucide-react';
+import { LayoutDashboard, Wallet, TrendingUp, Settings, Save, Upload, Trash2, PlusCircle, Calculator, Menu, History, Database, Telescope } from 'lucide-react';
 
 interface HeaderProps {
     totalCapital: number;
@@ -30,8 +30,8 @@ export const Header: React.FC<HeaderProps> = ({
 
     const navItems = [
         { key: 'dashboard', label: 'داشبورد', icon: <LayoutDashboard size={20} /> },
-        { key: 'trades', label: 'معاملات', icon: <History size={20} /> },
         { key: 'profit-loss', label: 'سود و زیان', icon: <TrendingUp size={20} /> },
+        { key: 'projection', label: 'آینده‌نگری', icon: <Telescope size={20} /> },
         { key: 'settings', label: 'تنظیمات', icon: <Settings size={20} /> },
     ];
 
@@ -86,13 +86,16 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1">
-                        <button onClick={onSave} className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="ذخیره">
+                        <button onClick={() => onAction('show-sql')} className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="کد SQL دیتابیس">
+                            <Database size={20} />
+                        </button>
+                        <button onClick={onSave} className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="ذخیره فایل">
                             <Save size={20} />
                         </button>
-                        <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="بارگذاری">
+                        <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="بارگذاری فایل">
                             <Upload size={20} />
                         </button>
-                        <button onClick={() => onAction('reset')} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="پاک کردن">
+                        <button onClick={() => onAction('reset')} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="پاک کردن اطلاعات">
                             <Trash2 size={20} />
                         </button>
                     </div>
@@ -131,6 +134,12 @@ export const Header: React.FC<HeaderProps> = ({
                                 {btn.icon} {btn.label}
                             </button>
                         ))}
+                        <button
+                                onClick={() => { onAction('show-sql'); setIsMenuOpen(false); }}
+                                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                        >
+                                <Database size={18} /> کد SQL دیتابیس
+                        </button>
                     </div>
                 </div>
             )}

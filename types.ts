@@ -37,13 +37,22 @@ export interface TradeRecord {
     totalCost: number;
 }
 
+export interface ProjectionSettings {
+    baseCapital: number;
+    years: number;
+    monthlyContribution: number;
+    annualIncrease: number;
+    expectedReturns: Record<string, number>;
+}
+
 export interface AppState {
     isInitialized: boolean;
-    currentPage: 'dashboard' | 'settings' | 'profit-loss' | 'trades';
+    currentPage: 'dashboard' | 'settings' | 'profit-loss' | 'trades' | 'projection';
     totalCapital: number;
     assets: Assets;
     transactions: Transaction[];
     tradeHistory: TradeRecord[];
+    projectionSettings?: ProjectionSettings;
 }
 
 export type AssetKey = string;

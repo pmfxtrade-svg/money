@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowRight, Calculator, Save, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ArrowRight, Calculator, Save, ChevronDown, ChevronUp, Copy, Check, Database } from 'lucide-react';
 import { Assets, Asset, TradeRecord } from '../types';
 import { NumberInput } from './NumberInput';
 import { formatCurrency, getTodayDate } from '../utils';
@@ -418,6 +418,65 @@ export const SubItemManagerModal: React.FC<{
                         </div>
                     );
                 })}
+            </div>
+        </BaseModal>
+    );
+};
+
+// --- SQL Code Modal ---
+export const SqlCodeModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+}> = ({ isOpen, onClose }) => {
+    const [copied, setCopied] = useState(false);
+
+    const sqlCode = `-- جدول ذخیره پورتفوی کاربران
+create table user_portfolios (
+  id uuid references auth.users not null primary key,
+  content jsonb,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- فعال‌سازی امنیت سطح ردیف (RLS)
+alter table user_portfolios enable row level security;
+
+-- ایجاد قوانین دسترسی (Policies)
+create policy "Users can delete their own portfolio." on user_portfolios for delete using (auth.uid() = id);
+create policy "Users can insert their own portfolio." on user_portfolios for insert with check (auth.uid() = id);
+create policy "Users can select their own portfolio." on user_portfolios for select using (auth.uid() = id);
+create policy "Users can update their own portfolio." on user_portfolios for update using (auth.uid() = id);`;
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(sqlCode);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <BaseModal isOpen={isOpen} onClose={onClose} title="کد SQL دیتابیس">
+            <div className="space-y-4">
+                <div className="bg-indigo-50 p-4 rounded-xl text-xs text-indigo-800 leading-relaxed border border-indigo-100">
+                    این کد را در بخش <span className="font-bold font-mono">SQL Editor</span> داشبورد Supabase اجرا کنید تا جداول مورد نیاز ساخته شوند.
+                </div>
+                
+                <div className="relative group">
+                    <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl text-[10px] font-mono overflow-x-auto text-left dir-ltr custom-scrollbar border border-slate-800">
+                        {sqlCode}
+                    </pre>
+                    <button 
+                        onClick={handleCopy}
+                        className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors backdrop-blur-sm"
+                        title="کپی کردن"
+                    >
+                        {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                    </button>
+                </div>
+
+                <div className="flex justify-end">
+                     <button onClick={onClose} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-sm transition-colors">
+                        بستن
+                     </button>
+                </div>
             </div>
         </BaseModal>
     );

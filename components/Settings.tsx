@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash, ArrowLeft, Check, LayoutDashboard } from 'lucide-react';
+import { Plus, Trash, LayoutDashboard, Check, X } from 'lucide-react';
 import { AppState } from '../types';
 import { NumberInput } from './NumberInput';
 import { formatCurrency } from '../utils';
@@ -8,7 +8,7 @@ interface SettingsProps {
     state: AppState;
     onSetInitialCapital: (amount: number) => void;
     onUpdatePercentage: (key: string, pct: number) => void;
-    onAddSubItem: (key: string) => void;
+    onAddSubItem: (key: string, name: string) => void;
     onRemoveSubItem: (key: string, index: number) => void;
     onNavigate: (page: any) => void;
 }
@@ -22,6 +22,26 @@ export const SettingsPage: React.FC<SettingsProps> = ({
     onNavigate
 }) => {
     const [initCap, setInitCap] = useState<number>(0);
+    const [addingToKey, setAddingToKey] = useState<string | null>(null);
+    const [newItemName, setNewItemName] = useState('');
+
+    const handleStartAdd = (key: string) => {
+        setAddingToKey(key);
+        setNewItemName('');
+    };
+
+    const handleCancelAdd = () => {
+        setAddingToKey(null);
+        setNewItemName('');
+    };
+
+    const handleConfirmAdd = (key: string) => {
+        if (newItemName.trim()) {
+            onAddSubItem(key, newItemName.trim());
+            setAddingToKey(null);
+            setNewItemName('');
+        }
+    };
 
     // MODE 1: ONBOARDING / WELCOME SCREEN
     if (!state.isInitialized) {
@@ -128,15 +148,42 @@ export const SettingsPage: React.FC<SettingsProps> = ({
                                     {/* Right: Subitems */}
                                     {!isCash && (
                                         <div className="lg:w-2/3">
-                                            <div className="flex justify-between items-center mb-4">
+                                            <div className="flex justify-between items-center mb-4 min-h-[40px]">
                                                 <h4 className="text-sm font-bold text-slate-500">زیرمجموعه‌های دارایی</h4>
-                                                <button 
-                                                    onClick={() => onAddSubItem(key)}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-colors"
-                                                >
-                                                    <Plus size={14} />
-                                                    افزودن جدید
-                                                </button>
+                                                
+                                                {addingToKey === key ? (
+                                                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
+                                                        <input 
+                                                            autoFocus
+                                                            type="text" 
+                                                            placeholder="نام دارایی جدید..."
+                                                            className="px-3 py-1.5 border border-indigo-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-100 w-48"
+                                                            value={newItemName}
+                                                            onChange={(e) => setNewItemName(e.target.value)}
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleConfirmAdd(key)}
+                                                        />
+                                                        <button 
+                                                            onClick={() => handleConfirmAdd(key)}
+                                                            className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
+                                                        >
+                                                            <Check size={16} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={handleCancelAdd}
+                                                            className="p-1.5 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => handleStartAdd(key)}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-colors"
+                                                    >
+                                                        <Plus size={14} />
+                                                        افزودن جدید
+                                                    </button>
+                                                )}
                                             </div>
                                             
                                             {asset.subItems.length > 0 ? (

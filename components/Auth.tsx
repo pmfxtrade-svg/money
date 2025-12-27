@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Copy, Check, Database, LogIn, UserPlus, AlertCircle } from 'lucide-react';
+import { LogIn, UserPlus, AlertCircle } from 'lucide-react';
 
 export const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -8,8 +8,6 @@ export const Auth = () => {
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState<{ text: string, type: 'error' | 'success' } | null>(null);
-  const [sqlCopied, setSqlCopied] = useState(false);
-  const [showSql, setShowSql] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,73 +37,9 @@ export const Auth = () => {
     }
   };
 
-  const sqlCode = `
--- جدول ذخیره اطلاعات پرتفوی کاربران
-create table user_portfolios (
-  id uuid references auth.users not null primary key,
-  content jsonb,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
--- فعال‌سازی امنیت سطح ردیف (RLS)
-alter table user_portfolios enable row level security;
-
--- سیاست برای خواندن اطلاعات خود کاربر
-create policy "Users can read own portfolio" 
-  on user_portfolios for select 
-  using (auth.uid() = id);
-
--- سیاست برای ایجاد/آپدیت اطلاعات خود کاربر
-create policy "Users can insert/update own portfolio" 
-  on user_portfolios for insert 
-  with check (auth.uid() = id);
-
-create policy "Users can update own portfolio" 
-  on user_portfolios for update
-  using (auth.uid() = id);
-  `.trim();
-
-  const copySql = () => {
-    navigator.clipboard.writeText(sqlCode);
-    setSqlCopied(true);
-    setTimeout(() => setSqlCopied(false), 2000);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 animate-in fade-in">
       
-      {/* SQL Header Section */}
-      <div className="w-full max-w-3xl mb-8 bg-slate-800 text-slate-200 rounded-2xl overflow-hidden shadow-xl border border-slate-700">
-        <div 
-            className="p-4 flex items-center justify-between cursor-pointer bg-slate-900 hover:bg-slate-950 transition-colors"
-            onClick={() => setShowSql(!showSql)}
-        >
-            <div className="flex items-center gap-2">
-                <Database size={20} className="text-indigo-400" />
-                <span className="font-bold text-sm">کد SQL مورد نیاز دیتابیس (برای راه‌اندازی اولیه)</span>
-            </div>
-            <span className="text-xs text-slate-400">{showSql ? 'بستن ▲' : 'مشاهده ▼'}</span>
-        </div>
-        
-        {showSql && (
-            <div className="p-4 bg-slate-800 relative">
-                <pre className="text-[10px] md:text-xs font-mono text-emerald-400 overflow-x-auto p-4 bg-slate-900 rounded-xl border border-slate-700 dir-ltr text-left">
-                    {sqlCode}
-                </pre>
-                <button 
-                    onClick={copySql}
-                    className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors shadow-lg"
-                >
-                    {sqlCopied ? <Check size={14} /> : <Copy size={14} />}
-                    {sqlCopied ? 'کپی شد' : 'کپی SQL'}
-                </button>
-                <p className="mt-2 text-[10px] text-slate-400 text-right">
-                    * این کد را در بخش SQL Editor داشبورد سوپابیس اجرا کنید تا جدول ذخیره‌سازی ساخته شود.
-                </p>
-            </div>
-        )}
-      </div>
-
       {/* Auth Card */}
       <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 md:p-10 border border-indigo-50">
         <div className="text-center mb-8">
