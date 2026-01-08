@@ -1,13 +1,13 @@
-const CACHE_NAME = 'capital-manager-v1';
+const CACHE_NAME = 'capital-manager-v2';
 const urlsToCache = [
   './',
   './index.html',
-  './index.tsx',
   './manifest.json',
   'https://cdn.tailwindcss.com'
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force new service worker to activate immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -39,6 +39,6 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Take control of all clients immediately
   );
 });

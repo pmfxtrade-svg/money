@@ -1,7 +1,8 @@
 {
   "name": "مدیریت سرمایه شخصی",
   "short_name": "مدیریت سرمایه",
-  "start_url": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f9fafb",
   "theme_color": "#4f46e5",
