@@ -72,15 +72,17 @@ export const Header: React.FC<HeaderProps> = ({
 
                 {/* Actions & Tools */}
                 <div className="flex items-center gap-2">
-                    <div className="hidden lg:flex items-center gap-2 mr-2 border-l border-gray-200 pl-4 ml-2">
+                    {/* Action Buttons: Visible on MD (Tablet) but labels hidden until LG */}
+                    <div className="hidden md:flex items-center gap-2 mr-2 border-l border-gray-200 pl-4 ml-2">
                          {actionButtons.map(btn => (
                             <button
                                 key={btn.key}
                                 onClick={() => onAction(btn.key)}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg shadow-opacity-20 hover:-translate-y-0.5 ${btn.color}`}
+                                title={btn.label}
                             >
                                 {btn.icon}
-                                {btn.label}
+                                <span className="hidden lg:inline">{btn.label}</span>
                             </button>
                         ))}
                     </div>
@@ -100,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
                         </button>
                     </div>
 
-                     {/* Mobile Menu Button */}
+                     {/* Mobile Menu Button - Hidden on MD and up */}
                      <button className="md:hidden p-2 text-gray-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                         <Menu size={24} />
                     </button>

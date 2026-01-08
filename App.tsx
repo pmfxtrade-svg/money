@@ -236,16 +236,22 @@ const App: React.FC = () => {
 
     const handleAddCapital = (amount: number) => {
         const newAssets = JSON.parse(JSON.stringify(state.assets));
-        const investable = amount * 0.8;
-        const cashPart = amount * 0.2;
+        
+        const cashPercentage = newAssets.cash.percentage || 0;
+        const cashPart = amount * (cashPercentage / 100);
+        const investable = amount - cashPart;
 
         newAssets.cash.value += cashPart;
         newAssets.cash.initialValue += cashPart;
 
-        const totalInvestablePct = 100 - newAssets.cash.percentage;
+        const totalInvestablePct = 100 - cashPercentage;
+        
         Object.keys(newAssets).forEach(key => {
             if (key !== 'cash') {
-                const share = (investable * newAssets[key].percentage) / totalInvestablePct;
+                const share = totalInvestablePct > 0 
+                    ? (investable * newAssets[key].percentage) / totalInvestablePct
+                    : 0;
+
                 newAssets[key].value += share;
                 newAssets[key].initialValue += share;
                 distributeToSubItems(newAssets[key]);
@@ -530,6 +536,7 @@ const App: React.FC = () => {
                 isOpen={activeModal === 'add-capital'} 
                 onClose={() => setActiveModal(null)} 
                 onCommit={handleAddCapital} 
+                assets={state.assets}
             />
             <ManageAssetModal 
                 isOpen={activeModal === 'manage-assets'} 

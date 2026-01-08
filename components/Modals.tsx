@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowRight, Calculator, Save, ChevronDown, ChevronUp, Copy, Check, Database } from 'lucide-react';
+import { X, ArrowRight, Calculator, Save, ChevronDown, ChevronUp, Copy, Check, Database, PieChart, ShoppingCart, Wallet } from 'lucide-react';
 import { Assets, Asset, TradeRecord } from '../types';
 import { NumberInput } from './NumberInput';
 import { formatCurrency, getTodayDate } from '../utils';
@@ -14,14 +14,14 @@ const BaseModal: React.FC<{
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-in fade-in duration-200">
-            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all scale-100 animate-in zoom-in-95 duration-200 custom-scrollbar">
-                <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all scale-100 animate-in zoom-in-95 duration-200 custom-scrollbar flex flex-col">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-20">
                     <h2 className="text-xl font-black text-slate-800">{title}</h2>
                     <button onClick={onClose} className="p-2 bg-gray-50 text-gray-400 hover:text-gray-800 rounded-full transition-colors">
                         <X size={20} />
                     </button>
                 </div>
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto">
                     {children}
                 </div>
             </div>
@@ -34,8 +34,70 @@ export const AddCapitalModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
     onCommit: (amount: number) => void;
-}> = ({ isOpen, onClose, onCommit }) => {
+    assets?: Assets;
+}> = ({ isOpen, onClose, onCommit, assets }) => {
     const [amount, setAmount] = useState<number>(0);
+    const [allocationPlan, setAllocationPlan] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (isOpen && amount > 0 && assets) {
+            const cashPercentage = assets.cash?.percentage || 0;
+            const cashPart = amount * (cashPercentage / 100);
+            const investable = amount - cashPart;
+            const plan = [];
+
+            // 1. Cash Reserve Card
+            plan.push({
+                key: 'cash',
+                name: `نقدینگی (${cashPercentage}٪ ذخیره)`,
+                totalAmount: cashPart,
+                subItems: [],
+                theme: 'blue',
+                icon: <Wallet size={20} />
+            });
+
+            // 2. Investment Assets
+            const totalInvestablePct = 100 - cashPercentage;
+
+            Object.keys(assets).forEach(key => {
+                if (key !== 'cash') {
+                    const asset = assets[key];
+                    // Avoid division by zero
+                    const share = totalInvestablePct > 0 
+                        ? (investable * asset.percentage) / totalInvestablePct 
+                        : 0;
+                    
+                    if (share > 0) {
+                        let subItemsPlan: any[] = [];
+                        if (asset.subItems && asset.subItems.length > 0) {
+                            const perItemShare = share / asset.subItems.length;
+                            subItemsPlan = asset.subItems.map(sub => ({
+                                name: sub.name,
+                                amount: perItemShare
+                            }));
+                        }
+
+                        let theme = 'slate';
+                        if (key === 'gold') theme = 'amber';
+                        if (key === 'stock') theme = 'emerald';
+                        if (key === 'foreignStock') theme = 'cyan';
+                        if (key === 'crypto') theme = 'violet';
+
+                        plan.push({
+                            key,
+                            name: asset.name,
+                            totalAmount: share,
+                            subItems: subItemsPlan,
+                            theme
+                        });
+                    }
+                }
+            });
+            setAllocationPlan(plan);
+        } else {
+            setAllocationPlan([]);
+        }
+    }, [amount, isOpen, assets]);
 
     const handleSubmit = () => {
         if (amount > 0) {
@@ -44,23 +106,106 @@ export const AddCapitalModal: React.FC<{
         }
     };
 
+    const getThemeStyles = (theme: string) => {
+        switch (theme) {
+            case 'amber': return 'bg-amber-50 border-amber-200 text-amber-800';
+            case 'emerald': return 'bg-emerald-50 border-emerald-200 text-emerald-800';
+            case 'cyan': return 'bg-cyan-50 border-cyan-200 text-cyan-800';
+            case 'violet': return 'bg-violet-50 border-violet-200 text-violet-800';
+            case 'blue': return 'bg-blue-50 border-blue-200 text-blue-800';
+            default: return 'bg-slate-50 border-slate-200 text-slate-800';
+        }
+    };
+
+     const getBadgeStyles = (theme: string) => {
+        switch (theme) {
+            case 'amber': return 'bg-amber-200 text-amber-900';
+            case 'emerald': return 'bg-emerald-200 text-emerald-900';
+            case 'cyan': return 'bg-cyan-200 text-cyan-900';
+            case 'violet': return 'bg-violet-200 text-violet-900';
+            case 'blue': return 'bg-blue-200 text-blue-900';
+            default: return 'bg-slate-200 text-slate-900';
+        }
+    };
+
     return (
-        <BaseModal isOpen={isOpen} onClose={onClose} title="افزایش سرمایه">
-            <div className="mb-6 bg-indigo-50 p-4 rounded-2xl text-indigo-800 text-sm">
-                مبلغ جدید را وارد کنید. سیستم به صورت خودکار ۲۰٪ را به نقدینگی و مابقی را طبق الگوریتم پورتفو تقسیم می‌کند.
+        <BaseModal isOpen={isOpen} onClose={onClose} title="افزایش سرمایه هوشمند">
+            <div className="sticky top-0 bg-white z-10 pb-4">
+                 <div className="mb-4 bg-indigo-50 p-4 rounded-2xl text-indigo-900 text-sm border border-indigo-100 flex gap-2 items-start">
+                    <Calculator className="shrink-0 mt-0.5 text-indigo-600" size={16}/>
+                    <span>مبلغ جدید را وارد کنید. سیستم بر اساس درصد نقدینگی تعیین شده ({assets?.cash?.percentage || 0}٪) و وزن سایر دارایی‌ها، پیشنهاد خرید را ارائه می‌دهد.</span>
+                </div>
+                
+                <label className="block text-xs font-bold text-slate-400 mb-2 mr-2">مبلغ واریزی (تومان)</label>
+                <NumberInput
+                    value={amount === 0 ? '' : amount}
+                    onCommit={setAmount}
+                    className="w-full px-4 py-4 border-2 border-indigo-100 rounded-2xl mb-2 text-center text-2xl font-mono font-black focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all text-indigo-900"
+                    placeholder="مثال: ۱۰,۰۰۰,۰۰۰"
+                    autoFocus
+                />
             </div>
-            <label className="block text-xs font-bold text-slate-400 mb-2 mr-2">مبلغ به تومان</label>
-            <NumberInput
-                value={amount === 0 ? '' : amount}
-                onCommit={setAmount}
-                className="w-full px-4 py-4 border-2 border-indigo-100 rounded-2xl mb-8 text-center text-xl font-mono font-bold focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
-                placeholder="مثال: ۵,۰۰۰,۰۰۰"
-                autoFocus
-            />
-            <button onClick={handleSubmit} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-2">
-                افزودن سرمایه
-                <ArrowRight size={18} />
-            </button>
+
+            {allocationPlan.length > 0 && (
+                <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500 pb-20">
+                    <div className="flex items-center gap-2 mb-2 px-1 border-b border-gray-100 pb-2">
+                        <ShoppingCart size={18} className="text-slate-400" />
+                        <span className="text-sm font-bold text-slate-600">لیست خرید پیشنهادی</span>
+                    </div>
+                    
+                    {allocationPlan.map((item) => (
+                        <div key={item.key} className={`rounded-2xl border-2 overflow-hidden ${getThemeStyles(item.theme).replace('text-', 'border-opacity-50 ')}`}>
+                            {/* Card Header */}
+                            <div className={`p-4 flex justify-between items-center ${getThemeStyles(item.theme)} bg-opacity-40`}>
+                                <div className="flex items-center gap-2">
+                                    {item.icon}
+                                    <span className="font-bold">{item.name}</span>
+                                </div>
+                                <span className={`font-mono font-black text-lg dir-ltr ${getThemeStyles(item.theme).split(' ')[2]}`}>
+                                    {formatCurrency(item.totalAmount).replace(' تومان', '')}
+                                </span>
+                            </div>
+
+                            {/* Sub Items Breakdown */}
+                            {item.subItems.length > 0 ? (
+                                <div className="bg-white p-3 space-y-2">
+                                    <p className="text-[10px] text-slate-400 font-bold mb-1 mr-1">تقسیم پیشنهادی:</p>
+                                    {item.subItems.map((sub: any, idx: number) => (
+                                        <div key={idx} className="flex justify-between items-center p-2 rounded-xl bg-gray-50 border border-gray-100">
+                                            <span className="text-xs font-bold text-slate-600">{sub.name}</span>
+                                            <span className="font-mono text-xs font-bold text-slate-800 dir-ltr bg-white px-2 py-1 rounded-lg border border-slate-200">
+                                                +{formatCurrency(sub.amount).replace(' تومان', '')}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                item.key !== 'cash' && (
+                                     <div className="bg-white p-3 text-center">
+                                        <p className="text-xs text-slate-400 italic">زیرمجموعه‌ای تعریف نشده است. کل مبلغ به موجودی اصلی اضافه می‌شود.</p>
+                                    </div>
+                                )
+                            )}
+                            {item.key === 'cash' && (
+                                <div className="bg-white p-3 text-center">
+                                    <p className="text-xs text-blue-400 font-bold">این مبلغ باید در حساب بانکی یا صندوق درآمد ثابت بماند.</p>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Sticky Bottom Button */}
+            <div className="fixed bottom-0 left-0 w-full p-4 bg-white border-t border-gray-100 rounded-b-[2rem] z-30">
+                 <button 
+                    onClick={handleSubmit} 
+                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 shadow-xl shadow-slate-300 transition-all flex items-center justify-center gap-2 active:scale-95"
+                 >
+                    <Check size={20} />
+                    تایید و ثبت در پورتفو
+                </button>
+            </div>
         </BaseModal>
     );
 };
